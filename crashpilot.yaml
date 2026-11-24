@@ -1,0 +1,24 @@
+# ============================================================
+# CrashPilot Configuration — Demo App
+# ============================================================
+# Autonomous self-healing & Shorebird hot-patch bot for Flutter
+# Docs: https://pub.dev/packages/crash_pilot
+# ============================================================
+
+crashpilot:
+  # ---- AI Provider ----
+  # Options: 'gemini', 'claude', 'openai', 'mock'
+  ai_provider: gemini
+  gemini_model: gemini-1.5-flash
+
+  # ---- GitHub Integration ----
+  # Target branch for Pull Requests
+  target_branch: main
+
+  # ---- Hot-Patching (Shorebird) ----
+  # Set to true only if using Shorebird OTA patching
+  auto_shorebird_patch: false
+
+  # ---- Safety Settings ----
+  # Max reflection/self-correction turns if test/analysis fails
+  max_retries: 2

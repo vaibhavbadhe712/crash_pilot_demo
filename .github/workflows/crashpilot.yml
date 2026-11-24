@@ -1,0 +1,80 @@
+name: 🚀 CrashPilot — Autonomous Self-Heal
+
+on:
+  # 1. Triggered via Webhook from Firebase Crashlytics / Sentry
+  repository_dispatch:
+    types: [crashpilot-heal]
+
+  # 2. Triggered manually by developer with crash stack trace
+  workflow_dispatch:
+    inputs:
+      crash_trace:
+        description: 'Paste the raw crash stack trace here (for manual testing)'
+        required: false
+        default: ''
+      dry_run:
+        description: 'Dry run mode (uses mock AI, no API key needed)'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+
+jobs:
+  crashpilot-heal:
+    name: 🩺 Autonomous Crash Healing
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🐦 Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: 📦 Install Dependencies
+        run: flutter pub get
+
+      - name: 🤖 Install CrashPilot
+        run: dart pub global activate crash_pilot
+
+      - name: 🚨 Run CrashPilot Autonomous Healing
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          CRASH_TRACE_INPUT: ${{ github.event.inputs.crash_trace }}
+          DRY_RUN_INPUT: ${{ github.event.inputs.dry_run }}
+          CLIENT_PAYLOAD: ${{ toJson(github.event.client_payload) }}
+        run: |
+          if [ "${{ github.event_name }}" = "repository_dispatch" ]; then
+            printf "%s" "$CLIENT_PAYLOAD" > /tmp/crash_payload.json
+            crashpilot heal --json /tmp/crash_payload.json --source crashlytics
+          elif [ -n "$CRASH_TRACE_INPUT" ]; then
+            printf "%s\n" "$CRASH_TRACE_INPUT" > /tmp/manual_trace.txt
+            if [ "$DRY_RUN_INPUT" = "true" ]; then
+              crashpilot heal --trace /tmp/manual_trace.txt --dry-run
+            else
+              crashpilot heal --trace /tmp/manual_trace.txt
+            fi
+          else
+            crashpilot simulate
+          fi
+
+      - name: 📊 Upload Diagnostic Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: crashpilot-report
+          path: |
+            CRASHPILOT_PR_REPORT.md
+            SIMULATED_PR_REPORT.md
+          if-no-files-found: ignore
+          retention-days: 30
