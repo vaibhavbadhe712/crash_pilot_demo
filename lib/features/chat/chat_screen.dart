@@ -15,7 +15,7 @@ class _ChatScreenState extends State<ChatScreen> {
     if (!scrollController.hasClients) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      if (!scrollController.hasClients) return;
+      if (!scrollController.hasClients || !scrollController.position.hasContentDimensions) return;
       scrollController.animateTo(
         0,
         duration: const Duration(milliseconds: 250),
