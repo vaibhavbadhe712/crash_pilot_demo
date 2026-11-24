@@ -12,17 +12,10 @@ class _ChatScreenState extends State<ChatScreen> {
   final List<String> messages = List.generate(20, (i) => 'Message $i');
 
   void _scrollToBottom() {
-    if (!scrollController.hasClients) return;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      if (!scrollController.hasClients) return;
-      scrollController.animateTo(
-        0,
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeOut,
-      );
-    });
-  }
+      // हे जाणूनबुजून null assertion टाकले आहे:
+      ScrollPosition? position;
+      position!.animateTo(0, duration: Duration(milliseconds: 200), curve: Curves.ease);
+    }
 
   @override
   void dispose() {
